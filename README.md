@@ -9,6 +9,12 @@
     - [Introducing Tagging](#introducing-tagging)
     - [Creating our Internet Gateway](#creating-our-internet-gateway)
     - [Creating our NAT Gateway](#creating-our-nat-gateway)
+    - [AWS Routes](#aws-routes) 
+        - [Creating Private routes](#creating-private-routes)
+        - [Creating Public routes](#creating-public-routes)
+- [AWS Identity and Access Management](#aws-identity-and-access-management)
+    - [Creating an IAM Role (AssumeRole)](#creating-an-iam-role-assumerole)
+    - [Creating an IAM Policy](#creating-an-iam-policy)
 
 
 ## Introduction
@@ -195,3 +201,213 @@ Note: The `terraform validate` command is used to validate the syntax of the ter
 
 result:
 ![terraform plan](img/terraform-plan-nat.png)
+
+
+### AWS Routes
+We need to create two route tables for our VPC. One for the public subnets and the other for the private subnets. For the private subnets, we would add the NAT gateway as that would stand as our gateway for the private subnets. For the public subnets, we would add the internet gateway as that would stand as our gateway for the public subnets. We would be doing the following:
+- Creating the private routes
+- Creating the public routes
+
+
+#### Creating Private routes
+- Create a file called `routes.tf` and add the following to it to create the private route table
+```terraform
+resource "aws_route_table" "private-rtb" {
+  vpc_id = aws_vpc.main.id
+
+  tags = merge(
+    var.tags,
+    {
+      Name = format("%s-PrivateRoute-Table-%s", var.name, var.environment)
+    },
+  )
+}
+```
+
+result:
+![terraform rtb](img/terraform-private-rtb.png)
+
+- Let's now create the private route table and attach a nat gateway to it.
+```terraform
+# Create route for the private route table and attach a nat gateway to it
+resource "aws_route" "private-rtb-route" {
+  route_table_id         = aws_route_table.private-rtb.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_nat_gateway.nat.id
+}
+```
+
+result:
+![terraform route](img/terraform-private-route.png)
+
+- We need to associate all the private subnets to the private route table.
+```terraform
+# associate all private subnets with the private route table
+resource "aws_route_table_association" "private-subnets-assoc" {
+  count          = length(aws_subnet.private[*].id)
+  subnet_id      = element(aws_subnet.private[*].id, count.index)
+  route_table_id = aws_route_table.private-rtb.id
+}
+```
+
+result:
+![terraform route table assoc](img/terraform-private-route-table-assoc.png)
+
+#### Creating Public routes
+Now let's move on to creating our public routes which would then be associated to the internet gateway and then associate our public subnets to the public route table.
+
+- Add the following line to `routes.tf` to create the public route table
+```terraform
+resource "aws_route_table" "public-rtb" {
+  vpc_id = aws_vpc.main.id
+
+  tags = merge(
+    var.tags,
+    {
+      Name = format("%s-PublicRoute-Table-%s", var.name, var.environment)
+    },
+  )
+}
+```
+
+result:
+![terraform public rtb](img/terraform-public-rtb.png)
+
+- Let's now create the public route table and attach an internet gateway to it.
+```terraform
+# Create route for the public route table and attach a internet gateway to it
+resource "aws_route" "public-rtb-route" {
+  route_table_id         = aws_route_table.public-rtb.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.ig.id
+}
+```
+
+result:
+![terraform public route](img/terraform-public-route.png)
+
+- Let's now associate our public subnets with the public route table.
+```terraform
+# associate all public subnets with the public route table
+resource "aws_route_table_association" "public-subnets-assoc" {
+  count          = length(aws_subnet.public[*].id)
+  subnet_id      = element(aws_subnet.public[*].id, count.index)
+  route_table_id = aws_route_table.public-rtb.id
+}
+```
+
+result:
+![terraform public route table assoc](img/terraform-public-route-table-assoc.png)
+
+- Let's run `terraform plan` to see the changes that would be made
+```bash
+terraform validate
+terraform plan
+```
+
+result:
+![terraform plan](img/terraform-plan-routes.png)
+
+- Let's now run `terraform apply` to apply the changes
+```bash
+terraform apply --auto-approve
+```
+
+result:
+![terraform apply](img/terraform-apply-routes.png)
+
+
+## AWS Identity and Access Management
+We want to pass an IAM role on our EC2 instances to give them access to some specific resources, so we need to do the following:
+
+### Creating an IAM role (AssumeRole)
+Assume Role uses Security Token Service (STS) API that returns a set of temporary security credentials that you can use to access AWS resources that you might not normally have access to. These temporary credentials consist of an access key ID, a secret access key, and a security token. Typically, you use AssumeRole within your account or for cross-account access.
+
+- Let's create a file called `roles.tf` and add the following to it to create an IAM role
+```terraform
+resource "aws_iam_role" "ec2_instance_role" {
+name = "ec2_instance_role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      },
+    ]
+  })
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "aws assume role"
+    },
+  )
+}
+```
+Note: This role grants an entity which is ec2, the ability to assume the role.
+
+result:
+![terraform assume role](img/terraform-assume-role.png)
+
+
+### Creating an IAM policy
+- This is where we need to define a required policy (i.e., permissions) according to our requirements. For example, allowing an IAM role to perform the action `describe` applied to EC2 instances:
+```terraform
+resource "aws_iam_policy" "policy" {
+  name        = "ec2_instance_policy"
+  description = "A test policy"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "ec2:Describe*",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+
+  })
+
+  tags = merge(
+    var.tags,
+    {
+      Name =  "aws assume policy"
+    },
+  )
+
+}
+```
+
+result:
+![terraform assume policy](img/terraform-assume-policy.png)
+
+- Let's attach the Policy to the IAM Role. We can do this by adding the following to `roles.tf`
+```terraform
+resource "aws_iam_role_policy_attachment" "test-attach" {
+        role       = aws_iam_role.ec2_instance_role.name
+        policy_arn = aws_iam_policy.policy.arn
+    }
+```
+
+result:
+![terraform assume policy attach](img/terraform-assume-policy-attach.png)
+
+- Let's create an instance profile and interpolate the `IAM Role` to it. We can do this by adding the following to `roles.tf`
+```terraform
+resource "aws_iam_instance_profile" "ip" {
+        name = "aws_instance_profile_test"
+        role =  aws_iam_role.ec2_instance_role.name
+    }
+```
+
+**Note:** An instance profile is a container for an IAM role that you can use to pass role information to an Amazon EC2 instance when the instance starts.
+
+result:
+![terraform assume instance profile](img/terraform-assume-instance-profile.png)
