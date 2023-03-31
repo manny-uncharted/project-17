@@ -1544,3 +1544,57 @@ We would do this in the next project.
 
 
 ## Additional Tasks
+
+1. Summarise your understanding on Networking concepts like IP Address, Subnets, CIDR Notation, IP Routing, Internet Gateways, NAT gateways.
+
+- IP Address: An IP address is a unique identifier assigned to devices on a network that allows them to communicate with each other using the Internet Protocol. IP addresses are made up of four sets of numbers separated by periods, and they can be either IPv4 (32-bit) or IPv6 (128-bit).
+
+- Subnets: A subnet is a smaller network within a larger network that allows devices to communicate with each other using a shared set of IP addresses. Subnets can be used to organize devices on a network and improve security by isolating different parts of the network.
+
+- CIDR Notation: Classless Inter-Domain Routing (CIDR) notation is a way of representing IP addresses and subnets in a more concise format. CIDR notation combines the IP address with a number that indicates the number of bits in the subnet mask, which determines the range of IP addresses that are included in the subnet.
+
+- IP Routing: IP routing is the process of forwarding packets of data between networks. Routing is performed by routers, which use a routing table to determine the best path for data to travel based on the destination IP address.
+
+- Internet Gateways: An Internet gateway is a device that connects a local network to the Internet. Gateways typically perform network address translation (NAT) to allow devices on the local network to access the Internet using a shared public IP address.
+
+- NAT: Network Address Translation (NAT) is a method of remapping one IP address space into another by modifying network address information in the IP header of packets while they are in transit across a traffic routing device. This allows multiple devices on a local network to share a single public IP address when communicating with the Internet.
+
+
+2. Summarise your understanding of the OSI Model, TCP/IP suite and how they are connected – research beyond the provided articles, and watch different YouTube videos to fully understand the concept around OSI and how it is related to the Internet and end-to-end Web Solutions. You do not need to memorize the layers – just understand the idea around them.
+
+The OSI Model (Open Systems Interconnection Model) is a conceptual framework for understanding how network protocols work together to facilitate communication between devices on a network. It consists of seven layers, each of which represents a different level of abstraction that enables communication between different types of devices and applications.
+
+The seven layers of the OSI Model are:
+
+Physical Layer: This layer is responsible for the transmission and reception of raw bit streams over a physical medium.
+
+Data Link Layer: This layer provides error-free transmission of data over a physical link by dividing data into frames and ensuring that they are transmitted without errors.
+
+Network Layer: This layer is responsible for routing packets of data between different networks based on their IP addresses.
+
+Transport Layer: This layer provides reliable transmission of data between applications by establishing a connection-oriented or connectionless communication channel.
+
+Session Layer: This layer establishes, manages, and terminates sessions between applications running on different devices.
+
+Presentation Layer: This layer is responsible for data translation, encryption, and compression to ensure that data can be understood by the receiving application.
+
+Application Layer: This layer provides services to application programs and enables them to access network resources.
+
+The TCP/IP suite (Transmission Control Protocol/Internet Protocol) is a set of protocols that enable communication between devices on the Internet. It is based on the OSI Model, but it combines some of the layers and simplifies others to create a more streamlined protocol stack.
+
+The four layers of the TCP/IP suite are:
+
+Link Layer: This layer is responsible for the physical transmission of data over a network.
+
+Internet Layer: This layer provides routing of data packets over the Internet based on their IP addresses.
+
+Transport Layer: This layer provides reliable communication between applications by establishing a connection-oriented or connectionless communication channel.
+
+Application Layer: This layer provides services to application programs and enables them to access network resources.
+
+The OSI Model and TCP/IP suite are connected in that they both provide a framework for understanding how different network protocols work together to facilitate communication between devices on a network. The TCP/IP suite is based on the OSI Model, but it simplifies and streamlines some of the layers to create a more efficient protocol stack. Together, they provide the foundation for end-to-end web solutions by enabling communication between devices on the Internet.
+
+
+3. Explain the difference between assume role policy and role policy
+
+The Assume Role Policy controls who can assume the role and under what conditions, while the Role Policy controls the permissions granted to the role and what actions can be performed by the entity assuming the role. Both policies are important for controlling access to AWS resources and ensuring the security of your AWS environment.
